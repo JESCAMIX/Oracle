@@ -1,40 +1,4 @@
-************************************* Install Oracle 19c ***************************************
-
-#Antes de instalar el software de orcle debemos cumplir con los siguientes preerequisitos
-#Para base de datos de DEV y QA  se solicita lo siguiente
-
- /root  10GB
- /tmp 10GB
- /home 10GB
- /swap 
-
-#Para el swap lo ideal es que sea igual a la ram si no se puede igualar almenos que tenga 10 GB 
-en el caso de que el server se encuentre en azure el swap se utiliza de forma dinamica por eso al 
-verificar aparece en 0% 
-
-ejemplo en servidor de pruebas 
-
-[root@192 ~]# df -h
-Filesystem      Size  Used Avail Use% Mounted on
-devtmpfs        3.5G     0  3.5G   0% /dev
-tmpfs           3.6G     0  3.6G   0% /dev/shm
-tmpfs           3.6G  9.0M  3.6G   1% /run
-tmpfs           3.6G     0  3.6G   0% /sys/fs/cgroup
-/dev/nvme0n1p1   20G  1.8G   18G   9% /
-/dev/nvme0n2p1   20G  172M   20G   1% /home
-/dev/nvme0n4p1   20G  172M   20G   1% /tmp
-/dev/nvme0n3p1   20G  337M   20G   2% /boot
-tmpfs           720M     0  720M   0% /run/user/0
-[root@192 ~]# free -h
-              total        used        free      shared  buff/cache   available
-Mem:          7.0Gi       353Mi       6.4Gi       8.0Mi       289Mi       6.4Gi
-Swap:          19Gi          0B        19Gi
-[root@192 ~]#
-
-
-# En caso de que la BD sea productiva solicitar mas espacio ya que el crecimiento de la BD es muy rapida.
-
-**************************************************************************************************
+************************************* Repositorios ***************************************
 
 Requisitos de repositorios para lanzar oracle-database-preinstall-19c
 
@@ -65,7 +29,7 @@ total 20
 
 #Generamos el archivo
 
-vi ol8-temp.repo
+[root@SVORABDSIFD01 yum.repos.d]#  vi ol8-temp.repo
 
 #Ingresamos lo siguiente 
 
@@ -97,7 +61,8 @@ enabled=1
 #Editamos el archivo redhat.repo
 [root@SVORABDSIFD01 yum.repos.d]# vi redhat.repo
 
-# En dode diga enable le colocamos un 0 
+# En donde diga enable le colocamos un 0 
+# NOTA: En caso de tener mas repositorios cambiar el enable a 0
 
 # Cuando terminemos del paso anterior verificamos con el comando yum repolist
 
@@ -161,3 +126,5 @@ Upgraded:
 
 Complete!
 [root@SVORABDSIFD01 yum.repos.d]#
+
+#En caso de llegar a aqui ya se puede lanzar el yum install oracle-database-preinstall-19c 
