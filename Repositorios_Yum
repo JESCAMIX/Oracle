@@ -3,20 +3,22 @@
 Requisitos de repositorios para lanzar oracle-database-preinstall-19c
 
 #Instalamos la llave que pide el repositorio 
+#Nos movemos a la ruta donde estan los repositorios 
 
 [root@192 ~]# cd /etc/yum.repos.d/
+[root@SVORABDSIFD01 yum.repos.d]#wget https://yum.oracle.com/RPM-GPG-KEY-oracle-ol8 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 
-wget https://yum.oracle.com/RPM-GPG-KEY-oracle-ol8 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+
+#En caso de que no agarre el wget 
+
+[root@SVORABDSIFD01 yum.repos.d]# sudo dnf install wget -y
 
 #Posterior
 
 [root@SVORABDSIFD01 yum.repos.d]# gpg --import --import-options show-only /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 
-#En caso de que no agarre el wget 
 
-sudo dnf install wget -y
-
-# posterior nos vamos a la ruta 
+# posterior en la ruta
 
 [root@192 ~]# cd /etc/yum.repos.d/
 
@@ -63,7 +65,6 @@ enabled=1
 
 # En donde diga enable le colocamos un 0 
 # NOTA: En caso de tener mas repositorios cambiar el enable a 0
-
 # Cuando terminemos del paso anterior verificamos con el comando yum repolist
 
 [root@SVORABDSIFD01 yum.repos.d]# yum repolist
