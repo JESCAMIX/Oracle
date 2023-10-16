@@ -34,130 +34,414 @@ Swap:          19Gi          0B        19Gi
 
 # En caso de que la BD sea productiva solicitar mas espacio ya que el crecimiento de la BD es muy rapida.
 
-**************************************************************************************************
+*********************************Install Oracle 19c silent mode*************************************
 
-Requisitos de repositorios para lanzar oracle-database-preinstall-19c
+#Instalar paquetes y dependencias (root)
 
-#Instalamos la llave que pide el repositorio 
+yum install oracle-database-preinstall-19c
 
-[root@192 ~]# cd /etc/yum.repos.d/
+#Agregar al usuario oracle al grupo wheel (root)
 
-wget https://yum.oracle.com/RPM-GPG-KEY-oracle-ol8 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+usermod -aG wheel oracle
 
-#Posterior
+*************************Validación de variables de entorno y directorios (oracle)*******************
 
-[root@SVORABDSIFD01 yum.repos.d]# gpg --import --import-options show-only /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+En caso de ya tener alguna instalación previa podemos verificar la ubicación del inventory
+cat /etc/oraInst.loc
 
-#En caso de que no agarre el wget 
+ORACLE_HOME=/u01/app/oracle/product/193
+ORACLE_BASE=/u01/app/oracle/
+INVENTORY_LOCATION=/u01/app/oraInventory
 
-sudo dnf install wget -y
+****************************************Creación de carpetas******************************************
 
-# posterior nos vamos a la ruta 
+mkdir -p /u01/app/oracle/product/193
+mkdir -p /u02/oradata
+mkdir -p /u03/fra
 
-[root@192 ~]# cd /etc/yum.repos.d/
+chown -R oracle:oinstall /u01/
+chown -R oracle:oinstall /u02/
+chown -R oracle:oinstall /u03/
 
-#Revisamos que no exista el archivo ol8-temp.repo
+**************************************Instalación de binarios*****************************************
 
-[root@SVORABDSIFD01 yum.repos.d]# ll
-total 20
--rw-r--r--. 1 root root 5266 Oct 11 21:59 redhat.repo
--rw-r--r--. 1 root root 6569 Jul 31 14:47 rh-cloud-eus.repo
+cp LINUX.X64_193000_db_home.zip /u01/app/oracle/product/193/
+cd /u01/app/oracle/product/193/
+unzip LINUX.X64_193000_db_home.zip
 
-#Generamos el archivo
 
-vi ol8-temp.repo
+R**************************************Respaldar archivo response*************************************
 
-#Ingresamos lo siguiente 
+cd /u01/app/oracle/product/193/install/response
+cp db_install.rsp db_install.rsp.bkp
 
-[ol8_baseos_latest]
-name=Oracle Linux 8 BaseOS Latest ($basearch)
-baseurl=https://yum.oracle.com/repo/OracleLinux/OL8/baseos/latest/$basearch/
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-gpgcheck=1
-enabled=1
+***************************************Editar archivo response****************************************
 
- 
+####################################################################
+## Copyright(c) Oracle Corporation 1998,2019. All rights reserved.##
+## ##
+## Specify values for the variables listed below to customize ##
+## your installation. ##
+## ##
+## Each variable is associated with a comment. The comment ##
+## can help to populate the variables with the appropriate ##
+## values. ##
+## ##
+## IMPORTANT NOTE: This file contains plain text passwords and ##
+## should be secured to have read permission only by oracle user ##
+## or db administrator who owns this installation. ##
+## ##
+####################################################################
+#------------------------------------------------------------------------------
+# Do not change the following system generated value.
+#------------------------------------------------------------------------------
+oracle.install.responseFileVersion=/oracle/install/rspfmt_dbinstall_response_schema_v19.0.0
+#-------------------------------------------------------------------------------
+# Specify the installation option.
+# It can be one of the following:
+# - INSTALL_DB_SWONLY
+# - INSTALL_DB_AND_CONFIG
+#-------------------------------------------------------------------------------
+oracle.install.option=INSTALL_DB_SWONLY
+#-------------------------------------------------------------------------------
+# Specify the Unix group to be set for the inventory directory.
+#-------------------------------------------------------------------------------
+UNIX_GROUP_NAME=oinstall
+#-------------------------------------------------------------------------------
+# Specify the location which holds the inventory files.
+# This is an optional parameter if installing on
+# Windows based Operating System.
+#-------------------------------------------------------------------------------
+INVENTORY_LOCATION=/u01/app/oraInventory
+#-------------------------------------------------------------------------------
+# Specify the complete path of the Oracle Home.
+#-------------------------------------------------------------------------------
+ORACLE_HOME=/u01/app/oracle/product/193
+#-------------------------------------------------------------------------------
+# Specify the complete path of the Oracle Base.
+#-------------------------------------------------------------------------------
+ORACLE_BASE=/u01/app/oracle
+#-------------------------------------------------------------------------------
+# Specify the installation edition of the component.
+#
+# The value should contain only one of these choices.
+# - EE : Enterprise Edition
+# - SE2 : Standard Edition 2
+#-------------------------------------------------------------------------------
+oracle.install.db.InstallEdition=EE
+###############################################################################
+# #
+# PRIVILEGED OPERATING SYSTEM GROUPS #
+# ------------------------------------------ #
+# Provide values for the OS groups to which SYSDBA and SYSOPER privileges #
+# needs to be granted. If the install is being performed as a member of the #
+# group "dba", then that will be used unless specified otherwise below. #
+# #
+# The value to be specified for OSDBA and OSOPER group is only for UNIX based #
+# Operating System. #
+# #
+###############################################################################
+#------------------------------------------------------------------------------
+# The OSDBA_GROUP is the OS group which is to be granted SYSDBA privileges.
+#-------------------------------------------------------------------------------
+oracle.install.db.OSDBA_GROUP=oinstall
+#------------------------------------------------------------------------------
+# The OSOPER_GROUP is the OS group which is to be granted SYSOPER privileges.
+# The value to be specified for OSOPER group is optional.
+#------------------------------------------------------------------------------
+oracle.install.db.OSOPER_GROUP=oinstall
+#------------------------------------------------------------------------------
+# The OSBACKUPDBA_GROUP is the OS group which is to be granted SYSBACKUP privileges.
+#------------------------------------------------------------------------------
+oracle.install.db.OSBACKUPDBA_GROUP=oinstall
+#------------------------------------------------------------------------------
+# The OSDGDBA_GROUP is the OS group which is to be granted SYSDG privileges.
+#------------------------------------------------------------------------------
+oracle.install.db.OSDGDBA_GROUP=oinstall
+#------------------------------------------------------------------------------
+# The OSKMDBA_GROUP is the OS group which is to be granted SYSKM privileges.
+#------------------------------------------------------------------------------
+oracle.install.db.OSKMDBA_GROUP=oinstall
+#------------------------------------------------------------------------------
+# The OSRACDBA_GROUP is the OS group which is to be granted SYSRAC privileges.
+#------------------------------------------------------------------------------
+oracle.install.db.OSRACDBA_GROUP=oinstall
+################################################################################
+# #
+# Root script execution configuration #
+# #
+################################################################################
+#------------------------------------------------------------------------------------------------
+-------
+# Specify the root script execution mode.
+#
+# - true : To execute the root script automatically by using the appropriate configuration
+methods.
+# - false : To execute the root script manually.
+#
+# If this option is selected, password should be specified on the console.
+#------------------------------------------------------------------------------------------------
+-------
+oracle.install.db.rootconfig.executeRootScript=false
+#--------------------------------------------------------------------------------------
+# Specify the configuration method to be used for automatic root script execution.
+#
+# Following are the possible choices:
+# - ROOT
+# - SUDO
+#--------------------------------------------------------------------------------------
+oracle.install.db.rootconfig.configMethod=
+#--------------------------------------------------------------------------------------
+# Specify the absolute path of the sudo program.
+#
+# Applicable only when SUDO configuration method was chosen.
+#--------------------------------------------------------------------------------------
+oracle.install.db.rootconfig.sudoPath=
+#--------------------------------------------------------------------------------------
+# Specify the name of the user who is in the sudoers list.
+# Applicable only when SUDO configuration method was chosen.
+# Note:For Single Instance database installations,the sudo user name must be the username of the
+user installing the database.
+#--------------------------------------------------------------------------------------
+oracle.install.db.rootconfig.sudoUserName=
+###############################################################################
+# #
+# Grid Options #
+# #
+###############################################################################
+#------------------------------------------------------------------------------
+# Value is required only if the specified install option is INSTALL_DB_SWONLY
+#
+# Specify the cluster node names selected during the installation.
+#
+# Example : oracle.install.db.CLUSTER_NODES=node1,node2
+#------------------------------------------------------------------------------
+oracle.install.db.CLUSTER_NODES=
+###############################################################################
+# #
+# Database Configuration Options #
+# #
+###############################################################################
+#-------------------------------------------------------------------------------
+# Specify the type of database to create.
+# It can be one of the following:
+# - GENERAL_PURPOSE
+# - DATA_WAREHOUSE
+# GENERAL_PURPOSE: A starter database designed for general purpose use or transaction-heavy
+applications.
+# DATA_WAREHOUSE : A starter database optimized for data warehousing applications.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.type=
+#-------------------------------------------------------------------------------
+# Specify the Starter Database Global Database Name.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.globalDBName=
+#-------------------------------------------------------------------------------
+# Specify the Starter Database SID.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.SID=
+#-------------------------------------------------------------------------------
+# Specify whether the database should be configured as a Container database.
+# The value can be either "true" or "false". If left blank it will be assumed
+# to be "false".
+#-------------------------------------------------------------------------------
+oracle.install.db.ConfigureAsContainerDB=
+#-------------------------------------------------------------------------------
+# Specify the Pluggable Database name for the pluggable database in Container Database.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.PDBName=
+#-------------------------------------------------------------------------------
+# Specify the Starter Database character set.
+#
+# One of the following
+# AL32UTF8, WE8ISO8859P15, WE8MSWIN1252, EE8ISO8859P2,
+# EE8MSWIN1250, NE8ISO8859P10, NEE8ISO8859P4, BLT8MSWIN1257,
+# BLT8ISO8859P13, CL8ISO8859P5, CL8MSWIN1251, AR8ISO8859P6,
+# AR8MSWIN1256, EL8ISO8859P7, EL8MSWIN1253, IW8ISO8859P8,
+# IW8MSWIN1255, JA16EUC, JA16EUCTILDE, JA16SJIS, JA16SJISTILDE,
+# KO16MSWIN949, ZHS16GBK, TH8TISASCII, ZHT32EUC, ZHT16MSWIN950,
+# ZHT16HKSCS, WE8ISO8859P9, TR8MSWIN1254, VN8MSWIN1258
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.characterSet=
+#------------------------------------------------------------------------------
+# This variable should be set to true if Automatic Memory Management
+# in Database is desired.
+# If Automatic Memory Management is not desired, and memory allocation
+# is to be done manually, then set it to false.
+#------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.memoryOption=
+#-------------------------------------------------------------------------------
+# Specify the total memory allocation for the database. Value(in MB) should be
+# at least 256 MB, and should not exceed the total physical memory available
+# on the system.
+# Example: oracle.install.db.config.starterdb.memoryLimit=512
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.memoryLimit=
+#-------------------------------------------------------------------------------
+# This variable controls whether to load Example Schemas onto
+# the starter database or not.
+# The value can be either "true" or "false". If left blank it will be assumed
+# to be "false".
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.installExampleSchemas=
+###############################################################################
+# #
+# Passwords can be supplied for the following four schemas in the #
+# starter database: #
+# SYS #
+# SYSTEM #
+# DBSNMP (used by Enterprise Manager) #
+# #
+# Same password can be used for all accounts (not recommended) #
+# or different passwords for each account can be provided (recommended) #
+# #
+###############################################################################
+#------------------------------------------------------------------------------
+# This variable holds the password that is to be used for all schemas in the
+# starter database.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.password.ALL=
+#-------------------------------------------------------------------------------
+# Specify the SYS password for the starter database.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.password.SYS=
+#-------------------------------------------------------------------------------
+# Specify the SYSTEM password for the starter database.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.password.SYSTEM=
+#-------------------------------------------------------------------------------
+# Specify the DBSNMP password for the starter database.
+# Applicable only when oracle.install.db.config.starterdb.managementOption=CLOUD_CONTROL
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.password.DBSNMP=
+#-------------------------------------------------------------------------------
+# Specify the PDBADMIN password required for creation of Pluggable Database in the Container
+Database.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.password.PDBADMIN=
+#-------------------------------------------------------------------------------
+# Specify the management option to use for managing the database.
+# Options are:
+# 1. CLOUD_CONTROL - If you want to manage your database with Enterprise Manager Cloud Control
+along with Database Express.
+# 2. DEFAULT -If you want to manage your database using the default Database Express option.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.managementOption=
+#-------------------------------------------------------------------------------
+# Specify the OMS host to connect to Cloud Control.
+# Applicable only when oracle.install.db.config.starterdb.managementOption=CLOUD_CONTROL
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.omsHost=
+#-------------------------------------------------------------------------------
+# Specify the OMS port to connect to Cloud Control.
+# Applicable only when oracle.install.db.config.starterdb.managementOption=CLOUD_CONTROL
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.omsPort=
+#-------------------------------------------------------------------------------
+# Specify the EM Admin user name to use to connect to Cloud Control.
+# Applicable only when oracle.install.db.config.starterdb.managementOption=CLOUD_CONTROL
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.emAdminUser=
+#-------------------------------------------------------------------------------
+# Specify the EM Admin password to use to connect to Cloud Control.
+# Applicable only when oracle.install.db.config.starterdb.managementOption=CLOUD_CONTROL
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.emAdminPassword=
+###############################################################################
+# #
+# SPECIFY RECOVERY OPTIONS #
+# ------------------------------------ #
+# Recovery options for the database can be mentioned using the entries below #
+# #
+###############################################################################
+#------------------------------------------------------------------------------
+# This variable is to be set to false if database recovery is not required. Else
+# this can be set to true.
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.enableRecovery=
+#-------------------------------------------------------------------------------
+# Specify the type of storage to use for the database.
+# It can be one of the following:
+# - FILE_SYSTEM_STORAGE
+# - ASM_STORAGE
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.storageType=
+#-------------------------------------------------------------------------------
+# Specify the database file location which is a directory for datafiles, control
+# files, redo logs.
+#
+# Applicable only when oracle.install.db.config.starterdb.storage=FILE_SYSTEM_STORAGE
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.fileSystemStorage.dataLocation=
+#-------------------------------------------------------------------------------
+# Specify the recovery location.
+#
+# Applicable only when oracle.install.db.config.starterdb.storage=FILE_SYSTEM_STORAGE
+#-------------------------------------------------------------------------------
+oracle.install.db.config.starterdb.fileSystemStorage.recoveryLocation=
+#-------------------------------------------------------------------------------
+# Specify the existing ASM disk groups to be used for storage.
+#
+# Applicable only when oracle.install.db.config.starterdb.storageType=ASM_STORAGE
+#-------------------------------------------------------------------------------
+oracle.install.db.config.asm.diskGroup=
+#-------------------------------------------------------------------------------
+# Specify the password for ASMSNMP user of the ASM instance.
+#
+# Applicable only when oracle.install.db.config.starterdb.storage=ASM_STORAGE
+#-------------------------------------------------------------------------------
+oracle.install.db.config.asm.ASMSNMPPassword=
 
-[ol8_AppStream_latest]
-name=Oracle Linux 8 appstream Latest ($basearch)
-baseurl=https://yum.oracle.com/repo/OracleLinux/OL8/appstream/$basearch/
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-gpgcheck=1
-enabled=1
 
- 
 
-[ol8_Add-ons_latest]
-name=Oracle Linux 8 addons Latest ($basearch)
-baseurl=https://yum.oracle.com/repo/OracleLinux/OL8/addons/$basearch/
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-gpgcheck=1
-enabled=1
+****************************************Ejecutar pre-requisitos***************************************
 
-#Editamos el archivo redhat.repo
-[root@SVORABDSIFD01 yum.repos.d]# vi redhat.repo
+cd /u01/app/oracle/product/193
 
-# En dode diga enable le colocamos un 0 
+./runInstaller -executePrereqs -silent -responseFile
+/u01/app/oracle/product/193/install/response/db_install.rsp
 
-# Cuando terminemos del paso anterior verificamos con el comando yum repolist
 
-[root@SVORABDSIFD01 yum.repos.d]# yum repolist
-repo id                                                                                   repo name
-ol8_Add-ons_latest                                                                        Oracle Linux 8 addons Latest (x86_64)
-ol8_AppStream_latest                                                                      Oracle Linux 8 appstream Latest (x86_64)
-ol8_baseos_latest                                                                         Oracle Linux 8 BaseOS Latest (x86_64)
+NOTA: Se pueden presentar errores, lo más comunes
+# Para el caso de las versiones 19 se presenta un error de supportedOSCheck, para resolverlo hay
+que descomentar una variable de entorno
+vi $ORACLE_HOME/cv/admin/cvu_config
+vi /orc/oracle/product/193/cv/admin/cvu_config
+# Descomentar CV_ASSUME_DISTID=OEL5
+*********************************************
+INFO: [Nov 23, 2022 1:14:36 AM] Swap Size: This is a prerequisite condition to test whether
+sufficient total swap space is available on the system.
+INFO: [Nov 23, 2022 1:14:36 AM] Severity:IGNORABLE
+INFO: [Nov 23, 2022 1:14:36 AM] OverallStatus:VERIFICATION_FAILED
+INFO: [Nov 23, 2022 1:14:36 AM] -----------------------------------------------
+INFO: [Nov 23, 2022 1:14:36 AM] Verification Result for Node:svorabdsifd01
+INFO: [Nov 23, 2022 1:14:36 AM] Expected Value:16GB (1.6777216E7KB)
+INFO: [Nov 23, 2022 1:14:36 AM] Actual Value:7.957GB (8343548.0KB)
+INFO: [Nov 23, 2022 1:14:36 AM] Error Message:PRVF-7573 : Sufficient swap size is not available
+on node "svorabdsifd01" [Required = 16GB (1.6777216E7KB
+) ; Found = 7.957GB (8343548.0KB)]
+INFO: [Nov 23, 2022 1:14:36 AM] Cause: The swap size found does not meet the minimum
+requirement.
+INFO: [Nov 23, 2022 1:14:36 AM] Action: Increase swap size to at least meet the minimum swap
+space requirement.
+INFO: [Nov 23, 2022 1:14:36 AM] -----------------------------------------------
+INFO: [Nov 23, 2022 1:14:36 AM] *********************************************
 
-#Concluimos con un yum install vim para verificar que ya sirve el repositorio
+********************************jecutar oracle software en Silent mode********************************
+cd /u01/app/oracle/product/193
+./runInstaller -silent -responseFile /u01/app/oracle/product/193/install/response/db_install.rsp
 
-yum install vim
-Last metadata expiration check: 0:01:39 ago on Thu 12 Oct 2023 04:56:13 PM UTC.
-Package vim-enhanced-2:8.0.1763-19.el8_6.4.x86_64 is already installed.
-Dependencies resolved.
-=======================================================================================================================================================================================================
- Package                                     Architecture                          Version                                                   Repository                                           Size
-=======================================================================================================================================================================================================
-Upgrading:
- vim-common                                  x86_64                                2:8.0.1763-19.0.1.el8_6.4                                 ol8_AppStream_latest                                6.3 M
- vim-enhanced                                x86_64                                2:8.0.1763-19.0.1.el8_6.4                                 ol8_AppStream_latest                                1.4 M
+***********************************Ejecutar scripts como root*****************************************
 
-Transaction Summary
-=======================================================================================================================================================================================================
-Upgrade  2 Packages
+As a root user, execute the following script(s):
+1. /u01/app/oraInventory/orainstRoot.sh
+2. /u01/app/oracle/product/193/root.sh
 
-Total download size: 7.7 M
-Is this ok [y/N]: y
-Downloading Packages:
-(1/2): vim-enhanced-8.0.1763-19.0.1.el8_6.4.x86_64.rpm                                                                                                                 1.4 MB/s | 1.4 MB     00:00
-(2/2): vim-common-8.0.1763-19.0.1.el8_6.4.x86_64.rpm                                                                                                                   3.8 MB/s | 6.3 MB     00:01
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Total                                                                                                                                                                  4.7 MB/s | 7.7 MB     00:01
-Oracle Linux 8 appstream Latest (x86_64)                                                                                                                               3.0 MB/s | 3.1 kB     00:00
-Importing GPG key 0xAD986DA3:
- Userid     : "Oracle OSS group (Open Source Software group) <build@oss.oracle.com>"
- Fingerprint: 76FD 3DB1 3AB6 7410 B89D B10E 8256 2EA9 AD98 6DA3
- From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-Is this ok [y/N]: y
-Key imported successfully
-Running transaction check
-Transaction check succeeded.
-Running transaction test
-Transaction test succeeded.
-Running transaction
-  Preparing        :                                                                                                                                                                               1/1
-  Upgrading        : vim-common-2:8.0.1763-19.0.1.el8_6.4.x86_64                                                                                                                                   1/4
-  Upgrading        : vim-enhanced-2:8.0.1763-19.0.1.el8_6.4.x86_64                                                                                                                                 2/4
-  Cleanup          : vim-enhanced-2:8.0.1763-19.el8_6.4.x86_64                                                                                                                                     3/4
-  Cleanup          : vim-common-2:8.0.1763-19.el8_6.4.x86_64                                                                                                                                       4/4
-  Running scriptlet: vim-common-2:8.0.1763-19.el8_6.4.x86_64                                                                                                                                       4/4
-  Running scriptlet: vim-common-2:8.0.1763-19.0.1.el8_6.4.x86_64                                                                                                                                   4/4
-  Verifying        : vim-common-2:8.0.1763-19.0.1.el8_6.4.x86_64                                                                                                                                   1/4
-  Verifying        : vim-common-2:8.0.1763-19.el8_6.4.x86_64                                                                                                                                       2/4
-  Verifying        : vim-enhanced-2:8.0.1763-19.0.1.el8_6.4.x86_64                                                                                                                                 3/4
-  Verifying        : vim-enhanced-2:8.0.1763-19.el8_6.4.x86_64                                                                                                                                     4/4
-Installed products updated.
+Verificar
+export ORACLE_HOME=/u01/app/oracle/product/193
+export PATH=/u01/app/oracle/product/193/bin:$PATH;
 
-Upgraded:
-  vim-common-2:8.0.1763-19.0.1.el8_6.4.x86_64                                                       vim-enhanced-2:8.0.1763-19.0.1.el8_6.4.x86_64
+which sqlplus
 
-Complete!
-[root@SVORABDSIFD01 yum.repos.d]#
+NOTA: Aplicar los ultimos parches al home antes de crear, dar upgrade o migrar DB
+
