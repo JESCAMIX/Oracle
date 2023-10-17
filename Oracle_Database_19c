@@ -427,7 +427,7 @@ space requirement.
 INFO: [Nov 23, 2022 1:14:36 AM] -----------------------------------------------
 INFO: [Nov 23, 2022 1:14:36 AM] *********************************************
 
-********************************jecutar oracle software en Silent mode********************************
+********************************Ejecutar oracle software en Silent mode*******************************
 cd /u01/app/oracle/product/193
 ./runInstaller -silent -responseFile /u01/app/oracle/product/193/install/response/db_install.rsp
 

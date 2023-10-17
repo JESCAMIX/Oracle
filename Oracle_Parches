@@ -1,1 +1,50 @@
 *********************************** Parches ***************************************
+
+# Aplicacion de parche Opatch
+
+ https://updates.oracle.com/Orion/PatchDetails/handle_rel_change?release=80121010102&plat_lang=226P&patch_file=&file_id=&password_required=&password_required_readme=&merged_trans=&aru=25317703&patch_num=6880880&patch_num_id=3506013&default_release=80121010102&default_plat_lang=226P&default_compatible_with=&patch_password=&orderby=&direction=&no_header=0&sortcolpressed=&tab_number=&email=tecmoi.afierro%40proveedores21b.com&userid=O-tecmoi.afierro%40proveedores21b.com
+
+https://support.oracle.com/knowledge/Oracle%20Cloud/2521164_1.html --> PARCHES ODB
+
+****************Creacion de directorio para guardar los parches *************************
+
+# Generalos el siguiente directorio donde estaran los parches
+
+mkdir -p orasoft/parches
+
+scp oracle@172.20.237.6:/home/oracle/orasoft/parches/p6880880_190000_Linux-x86-64.zip /home/oracle/orasoft/parches
+
+# Bajamos los parches desde la pagina ofical
+
+#Nos vamos a la carpeta donde tenemos los parches
+
+cd orasoft/parches
+*******************************Respaldo OPatch ******************************************
+
+>cd orc/app/oracle/product/193
+
+>mv OPatch OPatch.bk
+
+****************************Aplicacion de parche en OPatch*******************************
+
+> unzip  p6880880_190000_Linux-x86-64.zip
+
+SVORABDSIFD01:DEV::/orc/app/oracle/product/193>unzip p6880880_190000_Linux-x86-64.zip
+
+unzip p35320081_190000_Linux-x86-64.zip
+
+# NOTA: Las bases deben estar abajo
+
+#Nos movemos al directorio con el numerito de unzip
+
+/home/oracle/orasoft/parches/35320081
+
+****************************Verificar si hay conflisctos********************************
+#Para revisar que no tenga conflicto el parche lanzamos el comando
+
+$ORACLE_HOME/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph ./
+
+**********************************Aplicar parche*****************************************
+#En caso de no haber conflicto se aplica el parche
+
+$ORACLE_HOME/OPatch/opatch apply
