@@ -3,15 +3,13 @@
 
 /etc/hosts
 -- Se añade la siguiente linea
-0.0.0.0 server.com.mx server
+172.20 server.com.mx server
 
 /etc/hostname
 -- Se añade la siguiente linea
 server
 
 ***********************************Creacion de container***********************************
-
-
 
 Desde el home lanzar el siguiente comando
 
@@ -53,35 +51,42 @@ show parameter local
 lsnrctl status
 alter system set local_listener='LSNR65532';
 
-**********************************Creacion de Listener *************************************
+**********************************Creacion de tnsnames *************************************
 
-LSNR1521 =
-  (DESCRIPTION_LIST =
-    (DESCRIPTION =
-      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521)) 
-      (ADDRESS = (PROTOCOL = TCP)(HOST = SVORADB)(PORT = 1521))
+LISTENER_SIFDCDB =  (ADDRESS = (PROTOCOL = TCP)(HOST = SVORABDSIFD01)(PORT = 64531))
+
+
+SIFDCDB =  (DESCRIPTION =    (ADDRESS = (PROTOCOL = TCP)(HOST = SVORABDSIFD01)(PORT = 64531))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = SIFDCDB)
     )
   )
 
-SID_LIST_LSNR1521 =
+DBAGNCID =  (DESCRIPTION =    (ADDRESS = (PROTOCOL = TCP)(HOST = SVORABDSIFD01)(PORT = 64531))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = DBAGNCID)
+    )
+  )
+
+*************************************Creacion de listener*************************************
+
+SID_LIST_LSNR64531 =
   (SID_LIST =
     (SID_DESC =
-      (GLOBAL_DBNAME = CDB1)
-      (ORACLE_HOME = /u01/app/oracle/product/19.0.0/dbhome_1)
-      (SID_NAME = CDB1)
-    )
+      (GLOBAL_DBNAME = SIFDCDB)
+      (ORACLE_HOME = /orc/app/oracle/product/193)
+      (SID_NAME = SIFDCDB)
+  )
+  (SID_DESC =
+      (GLOBAL_DBNAME = DBAGNCID)
+      (ORACLE_HOME = /orc/app/oracle/product/193)
+      (SID_NAME = DBAGNCID)
   )
 
-*************************************Creacion de tnsnames*************************************
 
-LISTENER = (ADDRESS = (PROTOCOL = TCP)(HOST = SVORADB)(PORT = 1521))
-
-CDB1 =
+LSNR64531 =
   (DESCRIPTION =
-    (ADDRESS_LIST =
-      (ADDRESS = (PROTOCOL = TCP)(HOST = SVORADB)(PORT = 1521))
-    )
-    (CONNECT_DATA =
-	  (SERVER = DEDICATED)
-      (SERVICE_NAME = CDB1)
-    )
+     (ADDRESS = (PROTOCOL = TCP)(HOST = target-cdb)(PORT = 64531))
+  )
