@@ -32,8 +32,9 @@ Desde el home lanzar el siguiente comando
 !mkdir -p /u02/oradata/NAMECDB/NAMEPDB
 
 -- Dentro de CDB lanzaremos el comando para crear la BD
-CREATE PLUGGABLE DATABASE PDBPRUE ADMIN USER pdb_adm IDENTIFIED BY Password1 FILE_NAME_CONVERT=('/u02/oradata/QACDB/pdbseed/','/u02/oradata/NAMECDB/NAMEPDB/');
-
+CREATE PLUGGABLE DATABASE PDBPRUE ADMIN USER PDBADM IDENTIFIED BY Oracl31 
+DEFAULT TABLESPACE DATA DATAFILE '/u01/app/oracle/oradata/CDB1/PDBPRUE/PDBPRUEdata.dbf' 
+SIZE 250M AUTOEXTEND ON FILE_NAME_CONVERT = ('/u01/app/oracle/oradata/CDB1/pdbseed/','/u01/app/oracle/oradata/CDB1/PDBPRUE/');
 
 -- Ya creado la pluggable verificamos con el comando
 
@@ -51,42 +52,54 @@ show parameter local
 lsnrctl status
 alter system set local_listener='LSNR65532';
 
-**********************************Creacion de tnsnames *************************************
+ ***********************************Creacion de BD non CDB***********************************
 
-LISTENER_SIFDCDB =  (ADDRESS = (PROTOCOL = TCP)(HOST = SVORABDSIFD01)(PORT = 64531))
+dbca -silent -createDatabase \
+-templateName General_Purpose.dbc \
+-gdbName ORCLDB19C -sid ORCLDB19C -sysPassword Oracle$123 \
+-systemPassword Oracle$123 \
+-emConfiguration NONE \
+-datafileDestination /u01/app/oracle/oradata \
+-storageType FS \
+-characterSet AL32UTF8
 
-
-SIFDCDB =  (DESCRIPTION =    (ADDRESS = (PROTOCOL = TCP)(HOST = SVORABDSIFD01)(PORT = 64531))
-    (CONNECT_DATA =
-      (SERVER = DEDICATED)
-      (SERVICE_NAME = SIFDCDB)
-    )
-  )
-
-DBAGNCID =  (DESCRIPTION =    (ADDRESS = (PROTOCOL = TCP)(HOST = SVORABDSIFD01)(PORT = 64531))
-    (CONNECT_DATA =
-      (SERVER = DEDICATED)
-      (SERVICE_NAME = DBAGNCID)
-    )
-  )
-
-*************************************Creacion de listener*************************************
-
-SID_LIST_LSNR64531 =
+----------------------Listener----------------------------
+SID_LIST_LSNR1523 =
   (SID_LIST =
     (SID_DESC =
-      (GLOBAL_DBNAME = SIFDCDB)
-      (ORACLE_HOME = /orc/app/oracle/product/193)
-      (SID_NAME = SIFDCDB)
+      (GLOBAL_DBNAME = CDB1)
+      (ORACLE_HOME = /u01/app/oracle/product/193)
+      (SID_NAME = CDB1)
   )
   (SID_DESC =
-      (GLOBAL_DBNAME = DBAGNCID)
-      (ORACLE_HOME = /orc/app/oracle/product/193)
-      (SID_NAME = DBAGNCID)
+      (GLOBAL_DBNAME = PDBPRUE)
+      (ORACLE_HOME = /u01/app/oracle/product/193)
+      (SID_NAME = PDBPRUE)
   )
 
 
-LSNR64531 =
+LSNR1523 =
   (DESCRIPTION =
-     (ADDRESS = (PROTOCOL = TCP)(HOST = target-cdb)(PORT = 64531))
+     (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.2)(PORT = 1523))
+  )
+-----------------------------tnsnames--------------------------------
+LISTENER_CDB1 =
+  (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.2)(PORT = 1523)) 
+
+
+CDB1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.2)(PORT = 1523))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = CDB1)
+    )
+  )
+PDBPRUE =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.2)(PORT = 1523))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = PDBPRUE)
+    )
   )
