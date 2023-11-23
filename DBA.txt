@@ -291,3 +291,13 @@ select OS_Username Usuario_SO, Username Usuario_Oracle, Terminal ID_Terminal,
  DECODE (Returncode, '0', 'Conectado', '1005', 'Fallo - Null', 1017, 'Fallo', Returncode) 
  Tipo_Suceso, TO_CHAR(Timestamp, 'DD-MM-YY HH24:MI:SS') Hora_Inicio_Sesion, TO_CHAR(Logoff_Time, 'DD-MM-YY HH24:MI:SS') 
  Hora_Fin_Sesion from DBA_AUDIT_SESSION order by HORA_INICIO_SESION DESC
+ 
+////////////////// EXPORT IMPORT //////////////////
+
+
+
+PARA EL CASO DE REALIZAR UN FULL DE LA BASE DE DATOS ES LO SIGUIENTE 
+
+expdp usuario_exportar/contraseña_exportar@nombre_cdb full=y directory=directorio_export dumpfile=expdp_full_cdb.dmp logfile=expdp_full_cdb.log
+
+expdp serviciosxxi/Or4cl3xx1$ directory=DMPDIR dumpfile=FULL-20230419-OTPL001.dmp logfile=FULL-20230419-OTPL001.log full=yes
