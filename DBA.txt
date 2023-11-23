@@ -1,0 +1,293 @@
+************************************COMANDOS DBA************************************
+
+////////////////// SESIONES //////////////////
+-----------------------------------------------
+SESIONES POR GRUPO 
+
+SELECT COUNT(*) as active_sessions, username
+FROM v$session
+WHERE status = 'ACTIVE'
+GROUP BY username
+
+-----------------------------------------------
+NUMERO DE SESIONES POR USUARIO
+
+select status,username,count(1) 
+from v$session
+where username ='UA_MESA_VAL'
+AND STATUS='INACTIVE'
+group by username,status
+ORDER BY 3 DESC
+
+-----------------------------------------------
+VER SESIONES DE USUARIO + SU ID
+
+select USERNAME, SID, STATUS, MACHINE, PROGRAM, SECONDS_IN_WAIT
+from v$session
+where username ='UA_MESA_VAL'
+AND STATUS='INACTIVE'
+
+
+-----------------------------------------------
+MATAR SESIONES POR USUARIO
+
+SELECT 'ALTER SYSTEM KILL SESSION ' ||'''' || SID || ',' || SERIAL# || ''''||  ' IMMEDIATE;'
+                  FROM v$session
+                  where username='UA_SOABFP'
+                  and status='INACTIVE'
+
+-----------------------------------------------
+CANTIDAD DE USUARIOS EN UNA BD
+
+select count(1) from dba_users;                                              
+
+////////////////// SERVER  //////////////////
+
+
+-----------------------------------------------
+REVISAR Y CAMBIAR LA HORA EN SERVER
+
+CONSULTAR 
+> select systimestamp from dual;
+
+CAMBIAR HORA
+> timedatectl set-time 15:58:30
+
+////////////////// OBJETOS EN BD  //////////////////
+-----------------------------------------------
+DEPENDENCIAS DE OBJETOS
+
+SELECT                           
+DP.OWNER,                        
+DP.NAME,                                                                  
+DP.TYPE,                                                                                     
+OBJ.STATUS                                                                                   
+FROM                                                                                         
+DBA_DEPENDENCIES DP JOIN DBA_OBJECTS OBJ                   
+ON DP.OWNER = OBJ.OWNER                      
+AND DP.NAME = OBJ.OBJECT_NAME                      
+WHERE                                         
+DP.REFERENCED_NAME = 'OBJECT_NAME' --se cambia el OBJECT_NAME          
+GROUP BY                             
+DP.OWNER,                        
+DP.NAME,                         
+DP.TYPE,                         
+OBJ.STATUS
+
+-----------------------------------------------
+CONOCER QUE JOB EJECUTA UN OBJETO 
+
+  >select * from all_scheduler_jobs
+   where JOB_ACTION like '%Pkg_Parciales_App%'
+
+-----------------------------------------------
+OBJETO OCUPADO
+
+ >select va.sid, va.owner, va.object, va.type, ss.username, ss.status, sysdate
+	from v$access va, 
+			v$session ss
+	where va.sid = ss.sid and 
+	 va.object = 'tb_consulta_viv_tot'
+	  and SS.STATUS='ACTIVE';
+-----------------------------------------------
+DESCRIPCION COMPLETA DE OBJETO
+
+select OWNER,OBJECT_NAME, LAST_DDL_TIME, TIMESTAMO from dba_objects WHERE OBJECT_NAME in ('PKG_LIQ_TRASP_APT_CTAS')
+
+Descripcion de todos los campos de los objetos
+
+select *from dba_objects 
+
+-----------------------------------------------
+REVISION DE OBJETOS INVALIDOS
+
+select 'alter '||object_type||' '||owner||'.'||object_name||' compile;' from dba_objects where status= 'INVALID' 
+
+-----------------------------------------------
+RECOMPILACION DE OBJETOS
+
+select 'alter '||object_type||' '||owner||'.'||object_name||' compile;' from dba_objects where status= 'INVALID' ORDER BY object_type desc
+
+////////////////// PROFILE //////////////////
+CREAR PROFILES EN ORACLE
+
+CREATE PROFILE mi_perfil
+LIMIT
+  CPU_PER_SESSION    UNLIMITED --
+  SESSIONS_PER_USER  10;  -- NUMERO DE SESIONES PERMITIDAS
+  CONNECT_TIME       60; -- límite en minutos
+  IDLE_TIME       10; -- límite en minutos que puede estar inactivo
+  FAILED_LOGIN_ATTEMPTS  3, -- número de intentos 
+  PASSWORD_LOCK_TIME     1; -- dias a bloquear despues de que se niegue el acceso por intentos
+  PASSWORD_LIFE_TIME  90; -- vida útil de la pass en días
+  PASSWORD_REUSE_TIME  365, -- cuanto tiempo debe pasar para reutilizar una pass en días
+  PASSWORD_REUSE_MAX   5; -- cuantas veces se puede utuizar una misma pass
+
+
+////////////////// USUARIOS //////////////////
+-----------------------------------------------
+CREACION DE USUARIO
+
+CREATE USER <USERNAME>
+IDENTIFIED BY <PASS>
+DEFAULT TABLESPACE <NAMETBS>
+TEMPORARY TABLESPACE TEMP
+PROFILE <PROFILENAME>
+ACCOUNT UNLOCK;
+
+GRANT CONNECT TO <USERNAME>;
+GRANT CREATE SESSION TO <USERNAME>;
+
+GRANT SELECT, INSERT, DELETE, UPGRADE ON <USERNAME> TO UA_NOMAPP;
+
+-----------------------------------------------
+ELIMINACION DE USUARIO
+
+DROP USER nuevo_usuario CASCADE;
+-----------------------------------------------
+QUITAR EXPIRADO
+
+-- Consultamos el status del usuario (debe estar en open y con el profiel original)
+ > O. Abrimos la terminal ponemos "SQL"
+      > Posterios ponemos para ver la base en la que estamos 
+        > show con_name 
+ 
+ > 1. Primero con esta consulta vemos el estatus y el profile en el que se encuentra
+      > select username, account_status, profile from dba_users where username='AFORE_SPR';
+
+ > 2.  Observamos  en que profile se encuentra
+      > UDBA_PRF
+      > UAPL_PRF
+
+ > 3. Ahora alteramos el profile  
+      > alter user AFORE_SPR profile default; 
+
+ > 4. Colocamos la siguiente consulta que traera la contrasena en un alter 
+      > select 'alter user "'||d.username||'" identified by values '''||u.password||''';' c
+        from dba_users d, sys.user$ u
+        where d.username = upper('AFORE_SPR')
+        and u.user# = d.user_id; 
+*******************************************************************************************************************************************
+ > 4.0 si es 12 c Se realiza lo siguiente..
+ > paso 1.0 colocamos lo siguente en los comandos
+
+set linesize 300
+set longchunksize 200000
+set long 200000
+set pages 0
+column txt format a120
+SELECT DBMS_METADATA.GET_DDL('USER','AFORE_SPR') txt FROM DUAL;
+
+ > Nos arrojara lo siguiente..
+
+CREATE USER "UA_TABLEAU" IDENTIFIED BY VALUES 'S:3DC50DC3DFD243246653FF950EC1E5060FD50BC2532470F9B9F4D06F0ABE;T:61FC1
+FE3C0C50D19A1038FD671BAC3C9A9A010FFBA388070BBDAD87D6ABD6BEC9BCC470176076C0DFEE06A3F7E2926A38B9FE3FAE9CD61725363CFA48EC44
+52E817086A5F593A71E47DBE08A8100598F'
+      DEFAULT TABLESPACE "USERS"
+      TEMPORARY TABLESPACE "TEMP"
+      PASSWORD EXPIRE
+
+ '> acomodamos lo que nos arrojo    
+
+   Lo cambiamos al alter ----> alter user "UA_SEL_SIEFO" IDENTIFIED BY VALUES 'S:000000000000000000000000000000000000000000000000000000000000';  
+
+
+ > Colocamos la alteracion de caracteres para la pass 
+
+alter profile default limit PASSWORD_REUSE_TIME unlimited;
+alter profile default limit PASSWORD_REUSE_MAX unlimited;
+
+ > colocamos la pass 
+
+alter user "UA_TABLEAU" IDENTIFIED BY VALUES 'S:3DC50DC3DFD243246653FF950EC1E5060FD50BC2532470F9B9F4D06F0ABE;T:61FC1FE3C0C50D19A1038FD671BAC3C9A9A010FFBA388070BBDAD87D6ABD6BEC9BCC470176076C0DFEE06A3F7E2926A38B9FE3FAE9CD61725363CFA48EC4452E817086A5F593A71E47DBE08A8100598F';
+
+ > Regresamos los limites para caracteres de las pass
+
+alter profile default limit PASSWORD_REUSE_TIME 365;
+alter profile default limit PASSWORD_REUSE_MAX 5;
+
+ > Se regresa al profile y se valida..
+
+
+********************************************************************************************************************************************
+
+
+alter profile default limit PASSWORD_REUSE_TIME unlimited;
+alter profile default limit PASSWORD_REUSE_MAX unlimited;
+
+5. alter user "UA_TMK" identified by values --->
+
+alter user "UA_DWHAXY" identified by values 'F2677BD0518697E8';
+
+alter profile default limit PASSWORD_REUSE_TIME 365;
+alter profile default limit PASSWORD_REUSE_MAX 5;
+
+6. alter user UA_SEL_SIEFO profile UDBA_PRF;
+   alter user UA_PLANEA profile UAPL_PRF;
+
+
+////////////////// CONEXION A BD //////////////////
+-----------------------------------------------
+REVISION DE ACL
+
+-- EXISTEN 2 TABLAS EN DONDE BUSCAR LOS PRIVILEGIOS 
+
+1.- En esta se buscan por privilegios
+
+select * from  DBA_NETWORK_ACL_PRIVILEGES
+where PRINCIPAL = 'ESTIMSES'
+
+2.- EN ESTA TE MUESTRA LOS ACL´S
+
+SELECT * FROM dba_network_acls
+
+////////////////// INDICES //////////////////
+
+-----------------------------------------------
+INFORMACION DE INDICES
+
+select * from dba_indexes where table_name='nombredelatabla';
+
+SELECT * FROM DBA_INDEXES WHERE OWNER='OP' AND TABLE_NAME='MV_RECHAZOS_WD'
+
+////////////////// DIRECTORIOS //////////////////
+-----------------------------------------------
+Buscar el la ruta de un directorio
+
+select * from dba_directories where DIRECTORY_PATH='/iprod/PROCESAR/RECEPCION/AFORE/RETIROS/ISSSTE'
+
+
+////////////////// TABLESPACE //////////////////
+-----------------------------------------------
+CREAR TABLESPACE TBS 
+
+CREATE TABLESPACE NOMBRETBS 
+DATAFILE '/dprod01/oradata/SOLIDA/NOMBRETBS.dbf' SIZE 1M AUTOEXTEND ON,
+LOGGING
+ONLINE
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+BLOCKSIZE 4K
+SEGMENT SPACE MANAGEMENT AUTO
+FLASHBACK ON;
+
+-----------------------------------------------
+BORRAR TBS
+
+DROP TABLESPACE <TBSNAME> INCLUDING CONTENTS AND DATAFILES;
+
+
+////////////////// AUDITORIA //////////////////
+
+
+audit session whenever not successfull;
+
+DESHABILITAR AUDITORIA
+
+noaudit session by RIESGOSPRNVO_S;
+
+REVISAR SESIONES CONECTADAS O QUE INTENTARON CONECTAR 
+
+select OS_Username Usuario_SO, Username Usuario_Oracle, Terminal ID_Terminal,
+ DECODE (Returncode, '0', 'Conectado', '1005', 'Fallo - Null', 1017, 'Fallo', Returncode) 
+ Tipo_Suceso, TO_CHAR(Timestamp, 'DD-MM-YY HH24:MI:SS') Hora_Inicio_Sesion, TO_CHAR(Logoff_Time, 'DD-MM-YY HH24:MI:SS') 
+ Hora_Fin_Sesion from DBA_AUDIT_SESSION order by HORA_INICIO_SESION DESC
